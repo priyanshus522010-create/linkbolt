@@ -17,47 +17,102 @@ if ($slug) {
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LinkBolt | Bundle Your World</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" href="../images/favicon.png">
-    <style>
-        body { background: #020617; color: #f8fafc; font-family: sans-serif; }
-        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(59, 130, 246, 0.2); }
-        .blue-glow { box-shadow: 0 0 30px rgba(37, 99, 235, 0.2); }
-        .accent-blue { background: #21563eb; }
-        .accent-blue:hover { background: #1d4ed8; }
-        .input-box { background: #0f172a; border: 1px solid #1e293b; color: white; transition: 0.2s; }
-        .input-box:focus { border-color: #3b82f6; outline: none; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2); }
-    </style>
+<style>
+  body {
+    background: radial-gradient(circle at top, #0f172a, #020617);
+    color: #e2e8f0;
+    font-family: 'Inter', sans-serif;
+  }
+
+  /* Glass card effect */
+  .glass {
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(18px);
+    border: 1px solid rgba(96, 165, 250, 0.25);
+    border-radius: 20px;
+    transition: 0.3s ease;
+  }
+
+  .glass:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 40px rgba(37, 99, 235, 0.25);
+  }
+
+  /* Glow effect */
+  .blue-glow {
+    box-shadow: 0 0 25px rgba(59, 130, 246, 0.4);
+  }
+
+  /* Button style */
+  .accent-blue {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    border-radius: 10px;
+    font-weight: 600;
+    transition: 0.25s;
+  }
+
+  .accent-blue:hover {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    transform: scale(1.05);
+  }
+
+  /* Input style */
+  .input-box {
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(96, 165, 250, 0.3);
+    border-radius: 10px;
+    color: white;
+    padding: 8px 12px;
+    transition: 0.2s;
+  }
+
+  .input-box:focus {
+    border-color: #60a5fa;
+    outline: none;
+    box-shadow: 0 0 10px rgba(96, 165, 250, 0.5);
+  }
+</style>
+
 </head>
 <body class="min-h-screen p-4 md:p-10 flex flex-col items-center">
 
-    <?php if ($slug): ?>
-        <!-- VIEWING A BUNDLE -->
-        <div class="max-w-md w-full text-center mt-10">
-            <?php if (isset($error)): ?>
-                <h1 class="text-2xl font-bold text-red-400"><?= $error ?></h1>
-                <a href="index.php" class="text-blue-400 underline mt-4 block">Go Back</a>
-            <?php else: ?>
-                <div class="mb-8">
-                    <div class="w-16 h-16 accent-blue rounded-2xl mx-auto mb-4 flex items-center justify-center rotate-3 blue-glow">
-                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
-                    </div>
-                    <h1 class="text-3xl font-black uppercase tracking-tighter"><?= htmlspecialchars($bundle_data[0]['bundle_name']) ?></h1>
-                    <p class="text-slate-400 text-sm">Created via LinkBolt</p>
+ <?php if ($slug): ?>
+    <!-- VIEWING A BUNDLE -->
+    <div class="max-w-md w-full text-center mt-10">
+
+        <?php if (isset($error)): ?>
+            <h1 class="text-2xl font-bold text-red-400"><?= htmlspecialchars($error) ?></h1>
+            <a href="index.php" class="text-blue-400 underline mt-4 block">Go Back</a>
+
+        <?php else: ?>
+            <div class="mb-8">
+                <div class="w-16 h-16 accent-blue rounded-2xl mx-auto mb-4 flex items-center justify-center rotate-3 blue-glow">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1">
+                        </path>
+                    </svg>
                 </div>
-                <div class="space-y-4">
-                    <?php foreach ($bundle_data as $link): ?>
-                        <a href="<?= htmlspecialchars($link['destination_url']) ?>" target="_blank" 
-                           class="block p-5 glass rounded-2xl font-bold hover:scale-[1.02] transition-transform border-l-4 border-l-blue-500">
-                            <?= htmlspecialchars($link['link_title']) ?>
-                        </a>
-                    <?php endforeach; ?>
-                </div>
-            <?php endif; ?>
+
+                <h1 class="text-3xl font-black uppercase tracking-tighter">
+                    <?= htmlspecialchars($bundle_data[0]['bundle_name']) ?>
+                </h1>
+                <p class="text-slate-400 text-sm">Created via LinkBolt</p>
+            </div>
+
+            <div class="space-y-4">
+                <?php foreach ($bundle_data as $link): ?>
+                    <a href="<?= htmlspecialchars($link['destination_url']) ?>" target="_blank"
+                       class="block p-5 glass rounded-2xl font-bold hover:scale-[1.02] transition-transform border-l-4 border-l-blue-500">
+                        <?= htmlspecialchars($link['link_title']) ?>
+                    </a>
+                <?php endforeach; ?>
+            </div>
+
+        <?php endif; ?>
+    </div>
+<?php endif; ?>
+
         </div>
 
     <?php else: ?>
