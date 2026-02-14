@@ -10,7 +10,7 @@ if ($slug) {
                            WHERE b.slug = ?");
     $stmt->execute([$slug]);
     $bundle_data = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
+
     if (!$bundle_data) { $error = "Bundle not found."; }
 }
 ?>
@@ -209,7 +209,7 @@ async function loadBundles() {
                         <button onclick="window.open('${url}')"
                             class="text-xs bg-white text-black px-3 py-2 rounded font-bold">
                             Open
-                        </button>
+                        </button name>
                     </div>
                 </div>
             `;
@@ -223,21 +223,108 @@ async function loadBundles() {
 }
 
 loadBundles();
-                const res = await fetch('api.php?action=list&user_id=' + userId);
-                const bundles = await res.json();
-                const container = document.getElementById('my-bundles');
-                
-                bundles.forEach(b => {
-                    const url = window.location.origin + window.location.pathname + '?s=' + b.slug;
-                    container.innerHTML += `
-                        <div class="p-4 glass rounded-2xl border-l-2 border-blue-500">
-                            <div class="flex justify-between items-start mb-2">
-                                <span class="font-bold text-lg">${b.bundle_name}</span>
-                                <span class="text-[10px] bg-blue-500/20 text-blue-400 px-2 py-1 rounded uppercase">${b.link_count} Links</span>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <input type="text" value="${url}" readonly class="w-full bg-black/30 p-2 text-xs rounded border border-white/10 text-slate-400">
-                                <button onclick="window.open('${url}')" class="text-xs bg-white text-black px-3 py-2 rounded font-bold">Open</button>
+              const res = await fetch(`api.php?action=list&user_id=${userId}`);
+const bundles = await res.json();
+const container = document.getElementById('my-bundles');
+
+container.innerHTML = "";
+
+if (!bundles.length) {
+    container.innerHTML = `<p class="text-slate-500 text-sm">No bundles yet. Create your first one 🚀</p>`;
+    return;
+}
+
+bundles.forEach(bundle => {
+    const url = `${window.location.origin}${window.location.pathname}?s=${bundle.slug}`;
+
+  async function loadBundles() {
+    const container = document.getElementById("my-bundles");
+
+    try {
+        const response = await fetch(`api.php?action=list&user_id=${userId}`);
+        const data = await response.json();
+
+        // clear container safely
+        while (container.firstChild) {
+            container.removeChild(container.firstChild);
+        }
+
+        // empty state
+        if (!Array.isArray(data) || data.length === 0) {
+            const msg = document.createElement("p");
+            msg.className = "text-slate-500 text-sm";
+            msg.textContent = "No bundles available. Start by creating one 🚀";
+            container.appendChild(msg);
+            return;
+        }
+
+        // render bundles
+        for (const item of data) {
+            const linkURL = `${location.origin}${location.pathname}?s=${item.slug}`;
+
+            const card = document.createElement("div");
+            card.className =
+                "p-4 glass rounded-2xl border-l-2 border-blue-500 transition " +
+                "hover:shadow-lg hover:-translate-y-0.5";
+
+            const topRow = `
+                <div class="flex justify-between mb-2">
+                    <strong class="text-lg">${item.bundle_name}</strong>
+                    <span class="text-[10px] bg-blue-500/20 text-blue-400 px-2 py-1 rounded">
+                        ${item.link_count} Links
+                    </span>
+                </div>
+            `;
+
+            const bottomRow = `
+                <div class="flex gap-2">
+                    <input value="${linkURL}" readonly
+                        class="flex-1 bg-black/30 p-2 text-xs rounded border border-white/10 text-slate-400">
+
+                    <button class="copy text-xs bg-blue-500 text-white px-3 rounded">
+                        Copy
+                    </button>
+
+                    <button class="open text-xs bg-white text-black px-3 rounded">
+                        Open
+                    </button>
+                </div>
+            `;
+
+            card.innerHTML = topRow + bottomRow;
+
+            // actions
+            card.querySelector(".copy").onclick = () => navigator.clipboard.writeText(linkURL);
+            card.querySelector(".open").onclick = () => window.open(linkURL, "_blank", "noopener");
+
+            container.appendChild(card);
+        }
+
+    } catch (error) {
+        container.innerHTML =
+            `<p class="text-red-400 text-sm">Unable to load bundles right now.</p>`;
+        console.error("Bundle load error:", error);
+    }
+}
+
+// call function
+loadBundles();
+
+    `;
+
+    // Copy button action
+    card.querySelector('.copy-btn').onclick = () => {
+        navigator.clipboard.writeText(url);
+    };
+
+    // Open button action
+    card.querySelector('.open-btn').onclick = () => {
+        window.open(url, "_blank");
+    };
+
+    container.appendChild(card);
+});
+
                             </div>
                         </div>
                     `;
