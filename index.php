@@ -4,9 +4,9 @@ require 'pdo.php';
 // Check if viewing a bundle
 $slug = $_GET['s'] ?? null;
 if ($slug) {
-    $stmt = $pdo->prepare("SELECT b.bundle_name, l.link_title, l.destination_url 
+    $stmt = $pdo->prepare("SELECT b.bundle_name, l.link name_title, l.destination_url 
                            FROM bundles b 
-                           JOIN bundle_links l ON b.id = l.bundle_id 
+                           JOIN bundle_links l ON b.id = l.bundle_id
                            WHERE b.slug = ?");
     $stmt->execute([$slug]);
     $bundle_data = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -27,7 +27,7 @@ if ($slug) {
         body { background: #020617; color: #f8fafc; font-family: sans-serif; }
         .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(59, 130, 246, 0.2); }
         .blue-glow { box-shadow: 0 0 30px rgba(37, 99, 235, 0.2); }
-        .accent-blue { background: #2563eb; }
+        .accent-blue { background: #21563eb; }
         .accent-blue:hover { background: #1d4ed8; }
         .input-box { background: #0f172a; border: 1px solid #1e293b; color: white; transition: 0.2s; }
         .input-box:focus { border-color: #3b82f6; outline: none; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2); }
@@ -106,39 +106,123 @@ if ($slug) {
         </div>
 
         <script>
-            let userId = localStorage.getItem('lb_uid') || 'u_' + Math.random().toString(36).substr(2, 9);
-            localStorage.setItem('lb_uid', userId);
-            document.getElementById('user-tag').innerText = "ID: " + userId;
+          // Generate or get user ID
+let userId = localStorage.getItem('lb_uid');
 
-            function addLinkField() {
-                const div = document.createElement('div');
-                div.className = 'flex gap-2';
-                div.innerHTML = `<input type="text" placeholder="Title" class="w-1/3 p-2 text-sm rounded-lg input-box link-title-in">
-                                 <input type="url" placeholder="URL" class="w-2/3 p-2 text-sm rounded-lg input-box link-url-in">`;
-                document.getElementById('links-builder').appendChild(div);
-            }
+if (!userId) {
+    userId = `u_${crypto.randomUUID().slice(0, 8)}`;
+    localStorage.setItem('lb_uid', userId);
+}
 
-            async function createBundle() {
-                const name = document.getElementById('b-name').value;
-                const slug = document.getElementById('b-slug').value;
-                const titles = Array.from(document.querySelectorAll('.link-title-in')).map(i => i.value);
-                const urls = Array.from(document.querySelectorAll('.link-url-in')).map(i => i.value);
+// Show user ID on screen
+const userTag = document.getElementById('user-tag');
+if (userTag) userTag.textContent = `ID: ${userId}`;
 
-                const links = titles.map((t, i) => ({ title: t, url: urls[i] })).filter(l => l.title && l.url);
 
-                const res = await fetch('api.php?action=create', {
-                    method: 'POST',
-                    body: JSON.stringify({ user_id: userId, name, slug, links })
-                });
-                const out = await res.json();
-                if(out.success) {
-                    location.reload();
-                } else {
-                    alert(out.error || "Slug already taken or error occurred.");
-                }
-            }
+// Add new link input row
+function addLinkField() {
+    const wrapper = document.createElement('div');
+    wrapper.classList.add('flex', 'gap-2');
 
-            async function loadBundles() {
+    const titleInput = document.createElement('input');
+    titleInput.type = 'text';
+    titleInput.placeh
+
+          async function createBundle() {
+    try {
+        const name = document.getElementById('b-name').value.trim();
+        const slug = document.getElementById('b-slug').value.trim();
+
+        if (!name || !slug) {
+            alert("Please enter bundle name and slug.");
+            return;
+        }
+
+        const titles = [...document.querySelectorAll('.link-title-in')].map(i => i.value.trim());
+        const urls   = [...document.querySelectorAll('.link-url-in')].map(i => i.value.trim());
+
+        const links = titles
+            .map((t, i) => ({ title: t, url: urls[i] }))
+            .filter(l => l.title && l.url);
+
+        if (links.length === 0) {
+            alert("Add at least one valid link.");
+            return;
+        }
+
+        const res = await fetch('api.php?action=create', {
+            method: 'POST',
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ user_id: userId, name, slug, links })
+        });
+
+        const out = await res.json();
+
+        if (out.success) {
+            alert("✅ Bundle created successfully!");
+            location.reload();
+        } else {
+            alert(out.error || "Slug already taken or error occurred.");
+        }
+
+    } catch (err) {
+        console.error(err);
+        alert("Something went wrong. Try again.");
+    }
+}
+
+
+async function loadBundles() {
+    try {
+        const res = await fetch(`api.php?action=list&user_id=${userId}`);
+        const bundles = await res.json();
+        const container = document.getElementById('my-bundles');
+
+        container.innerHTML = "";
+
+        if (bundles.length === 0) {
+            container.innerHTML = `<p class="text-slate-500 text-sm">No bundles created yet.</p>`;
+            return;
+        }
+
+        bundles.forEach(b => {
+            const url = `${window.location.origin}${window.location.pathname}?s=${b.slug}`;
+
+            container.innerHTML += `
+                <div class="p-4 glass rounded-2xl border-l-2 border-blue-500 hover:scale-[1.02] transition">
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="font-bold text-lg">${b.bundle_name}</span>
+                        <span class="text-[10px] bg-blue-500/20 text-blue-400 px-2 py-1 rounded uppercase">
+                            ${b.link_count} Links
+                        </span>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <input type="text" value="${url}" readonly
+                            class="w-full bg-black/30 p-2 text-xs rounded border border-white/10 text-slate-400">
+
+                        <button onclick="navigator.clipboard.writeText('${url}')"
+                            class="text-xs bg-blue-500 text-white px-3 py-2 rounded font-bold hover:bg-blue-600">
+                            Copy
+                        </button>
+
+                        <button onclick="window.open('${url}')"
+                            class="text-xs bg-white text-black px-3 py-2 rounded font-bold">
+                            Open
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+
+    } catch (err) {
+        console.error(err);
+        document.getElementById('my-bundles').innerHTML =
+            `<p class="text-red-400 text-sm">Failed to load bundles.</p>`;
+    }
+}
+
+loadBundles();
                 const res = await fetch('api.php?action=list&user_id=' + userId);
                 const bundles = await res.json();
                 const container = document.getElementById('my-bundles');
